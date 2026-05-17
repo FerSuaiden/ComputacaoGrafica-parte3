@@ -1,39 +1,34 @@
-# Projeto 2 - Computacao Grafica
+# Projeto 3 - Computacao Grafica
 
-Cena 3D em OpenGL para o Projeto 2 da disciplina de Computacao Grafica.
+Cena 3D em OpenGL para o Projeto 3 da disciplina de Computacao Grafica.
 
-O cenario representa uma balada urbana. O ambiente interno e um clube moderno
-com pista de danca central, varias pessoas texturizadas, palco para o som,
-sofas, bancos, luminarias e bola de discoteca. O ambiente externo e uma
-rua/estacionamento com piso de asfalto, entrada metalica, postes alinhados,
-carro e lixeira. Todo o codigo esta em
-`Projeto_2_Computacao_Grafica.ipynb`.
+O cenario continua sendo uma balada urbana com ambiente interno e ambiente
+externo. A base do Projeto 2 foi mantida, mas o pipeline de renderizacao foi
+atualizado para incluir iluminacao ambiente, difusa e especular em shader,
+com materiais e texturas definidos no proprio codigo para cada objeto da cena.
 
-Fora do notebook existem apenas arquivos de dados: modelos `.obj`, materiais
-`.mtl`, imagens de textura prontas e `assets/sources/ASSET_SOURCES.txt` com as
-fontes/licencas.
+Todo o codigo esta em `Projeto_2_Computacao_Grafica.ipynb`.
 
 ## Requisitos Atendidos
 
-- Ambiente interno e ambiente externo com objetivo coerente.
-- O ambiente interno tambem e um modelo `.obj`: `club_room`.
-- A balada foi fechada com parede frontal texturizada.
-- A area externa inclui entrada metalica em `.obj` separado.
-- Piso interno e piso externo com texturas prontas diferentes, com a pista como quadrado central.
-- Pessoas adicionadas com texturas de imagem prontas (`party_person_01` e `party_person_male_01`).
-- Skybox trocado por um ceu noturno limpo, sem cidade ou montanhas.
-- Carro trocado por outro modelo normal do pacote automotivo.
-- Bola de discoteca com textura correta de mosaico espelhado.
-- Camera com matrizes Model, View e Projection.
-- Limite de movimentacao da camera dentro do terreno/ceu.
-- Visualizacao da malha poligonal com a tecla `P`.
-- Transformacoes independentes por teclado:
-  - translacao no carro externo;
-  - rotacao na bola de discoteca;
-  - escala no boombox.
-- Sem efeitos de iluminacao.
-- Sem uso de funcoes obsoletas como `glBegin`, `glEnd`, `glTranslate`,
-  `glRotate`, `glScale`, `glLight`, `glMaterial` ou matrizes fixas do OpenGL.
+- O carro externo continua translacionando por teclado e agora carrega uma
+  fonte de luz externa associada a ele.
+- Dois objetos internos atuam como luzes coloridas distintas:
+  - uma luminaria de teto com luz quente;
+  - a bola de discoteca com luz fria.
+- A luz externa afeta apenas objetos do ambiente externo.
+- As duas luzes internas afetam apenas objetos do ambiente interno.
+- A luz ambiente possui interruptor proprio.
+- Cada fonte de luz pode ser ligada ou desligada independentemente.
+- Existem controles para aumentar e diminuir:
+  - a luz ambiente;
+  - a reflexao difusa global;
+  - a reflexao especular global.
+- Cada objeto recebe parametros proprios de material no codigo
+  (`ambient_factor`, `diffuse_factor`, `specular_factor`, `shininess`).
+- O projeto nao usa arquivos `.mtl`.
+- O codigo usa apenas pipeline moderno, sem `glLight`, `glMaterial`,
+  `glBegin`, `glEnd`, `glTranslate`, `glRotate`, `glScale` ou matrizes fixas.
 
 ## Estrutura
 
@@ -41,30 +36,11 @@ fontes/licencas.
 .
 ├── Projeto_2_Computacao_Grafica.ipynb
 ├── README.md
+├── generate_project3_notebook.py
 └── assets
     ├── models
-    │   ├── bar_chair_round_01.obj / bar_chair_round_01.mtl
-    │   ├── boombox.obj / boombox.mtl
-    │   ├── club_room.obj / club_room.mtl
-    │   ├── dance_floor.obj / dance_floor.mtl
-    │   ├── disco_ball.obj / disco_ball.mtl
-    │   ├── disco_support.obj / disco_support.mtl
-    │   ├── lounge_floor.obj / lounge_floor.mtl
-    │   ├── modern_ceiling_lamp_01.obj / modern_ceiling_lamp_01.mtl
-    │   ├── night_skybox.obj / night_skybox.mtl
-    │   ├── corrado_car_01.obj / corrado_car_01.mtl
-    │   ├── oga_trash_can_01.obj / oga_trash_can_01.mtl
-    │   ├── parking_lot.obj / parking_lot.mtl
-    │   ├── party_person_male_01.obj / party_person_male_01.mtl
-    │   ├── party_person_01.obj / party_person_01.mtl
-    │   ├── sofa_01.obj / sofa_01.mtl
-    │   ├── street_lamp_01.obj / street_lamp_01.mtl
-    │   ├── rollershutter_door.obj / rollershutter_door.mtl
-    │   └── trash_can_01.obj / trash_can_01.mtl
-    ├── sources
-    │   └── ASSET_SOURCES.txt
-    └── textures
-        └── imagens `.jpg`/`.png` usadas pelos materiais
+    ├── textures
+    └── sources/ASSET_SOURCES.txt
 ```
 
 ## Como Executar
@@ -88,24 +64,29 @@ Execute as celulas em ordem. A ultima celula abre a janela OpenGL.
 - `W`, `A`, `S`, `D`: mover a camera no plano horizontal.
 - `Espaco` / `C`: subir e descer a camera.
 - Mouse: olhar ao redor.
-- `P`: exibir ou ocultar a malha poligonal.
 - `T` / `G`: transladar o carro externo.
-- `R` / `F`: rotacionar a bola de discoteca.
-- `Z` / `X`: alterar a escala do boombox.
+- `0`: ligar ou desligar a luz ambiente.
+- `1`: ligar ou desligar a luz externa do carro.
+- `2`: ligar ou desligar a luz interna da luminaria.
+- `3`: ligar ou desligar a luz interna da bola de discoteca.
+- `U` / `J`: aumentar ou diminuir a componente ambiente.
+- `I` / `K`: aumentar ou diminuir a reflexao difusa global.
+- `O` / `L`: aumentar ou diminuir a reflexao especular global.
+- `P`: exibir ou ocultar a malha poligonal.
 - `Esc`: fechar a janela.
+
+## Observacoes Tecnicas
+
+- O carregador Wavefront usa apenas os dados geometricos do `.obj`.
+- As texturas dos modelos sao associadas manualmente no proprio codigo.
+- As normais sao lidas de `vn` quando existem; quando um `.obj` nao traz
+  normais, elas sao calculadas por triangulo no carregamento.
+- O skybox e desenhado separadamente e nao participa da iluminacao da cena.
+- A segmentacao entre ambiente interno e externo e feita com zonas enviadas ao
+  shader, o que evita vazamento de luz entre os dois espacos.
 
 ## Fontes dos Assets
 
 As origens dos modelos e texturas usados na cena estao documentadas em:
 
 - [assets/sources/ASSET_SOURCES.txt](assets/sources/ASSET_SOURCES.txt)
-
-Resumo dos principais assets:
-
-- `club_room.obj`, `lounge_floor.obj`, `dance_floor.obj` e `parking_lot.obj`: modelados/ajustados localmente para este projeto.
-- `party_person_01` e `party_person_male_01`: modelos humanos com textura pronta, vindos do CadNav.
-- `corrado_car_01`: carro com textura pronta, vindo do OpenGameArt.
-- `oga_trash_can_01`: lixeira com textura pronta, vinda do OpenGameArt.
-- `boombox`, `bar_chair_round_01`, `sofa_01`, `modern_ceiling_lamp_01` e `street_lamp_01`: assets prontos.
-- `rollershutter_door`: asset pronto usado na entrada externa.
-- `night_skybox`, `dance_floor`, `disco_ball`, paredes e outros materiais: texturas prontas listadas no arquivo de fontes.
