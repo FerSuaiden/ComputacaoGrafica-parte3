@@ -457,6 +457,45 @@ def load_obj_mesh(obj_path):
     vertex_data["texcoord"] = out_texcoords
     vertex_data["normal"] = out_normals
     return CpuMesh(obj_path.stem, vertex_data, segments)
+
+
+def build_quad_mesh(name, quads, texture_path):
+    positions = []
+    texcoords = []
+    normals = []
+
+    for quad in quads:
+        p0, p1, p2, p3, uv_scale = quad
+        normal = compute_face_normal(p0, p1, p2)
+        uv0 = (0.0, 0.0)
+        uv1 = (uv_scale[0], 0.0)
+        uv2 = (uv_scale[0], uv_scale[1])
+        uv3 = (0.0, uv_scale[1])
+        triangles = [
+            (p0, uv0, normal),
+            (p1, uv1, normal),
+            (p2, uv2, normal),
+            (p0, uv0, normal),
+            (p2, uv2, normal),
+            (p3, uv3, normal),
+        ]
+        for position, uv, tri_normal in triangles:
+            positions.append(position)
+            texcoords.append(uv)
+            normals.append(tri_normal)
+
+    vertex_data = np.zeros(
+        len(positions),
+        dtype=[("position", np.float32, 3), ("texcoord", np.float32, 2), ("normal", np.float32, 3)],
+    )
+    vertex_data["position"] = positions
+    vertex_data["texcoord"] = texcoords
+    vertex_data["normal"] = normals
+    return CpuMesh(
+        name,
+        vertex_data,
+        [MeshSegment(start=0, count=len(positions), material_name="__default__", texture_path=texture_path)],
+    )
 '''
 
 
@@ -486,6 +525,7 @@ SCENE_CATALOG = {
         "club_room",
         "lounge_floor",
         "dance_floor",
+        "club_front_facade",
         "parking_lot",
         "night_skybox",
     ],
@@ -512,7 +552,18 @@ SCENE_CATALOG = {
 for group, names in SCENE_CATALOG.items():
     print(f"{group}:")
     for model_name in names:
-        mesh = load_obj_mesh(MODELS_DIR / f"{model_name}.obj")
+        if model_name == "club_front_facade":
+            mesh = build_quad_mesh(
+                "club_front_facade",
+                [
+                    ((-10.0, 0.0, 7.53), (-2.1, 0.0, 7.53), (-2.1, 5.4, 7.53), (-10.0, 5.4, 7.53), (4.0, 2.0)),
+                    ((2.1, 0.0, 7.53), (10.0, 0.0, 7.53), (10.0, 5.4, 7.53), (2.1, 5.4, 7.53), (4.0, 2.0)),
+                    ((-2.1, 2.7, 7.53), (2.1, 2.7, 7.53), (2.1, 5.4, 7.53), (-2.1, 5.4, 7.53), (2.0, 1.5)),
+                ],
+                TEXTURES_DIR / "club_wall_black_painted_planks_diff_1k.jpg",
+            )
+        else:
+            mesh = load_obj_mesh(MODELS_DIR / f"{model_name}.obj")
         textured_segments = sum(1 for segment in mesh.segments if segment.texture_path is not None)
         print(
             f"  - {model_name:36s} | vertices: {len(mesh.vertex_data):7d} "
@@ -626,7 +677,18 @@ def upload_mesh(cpu_mesh):
 all_model_names = list(dict.fromkeys(SCENE_CATALOG["ambiente"] + SCENE_CATALOG["interno"] + SCENE_CATALOG["externo"]))
 gpu_meshes = {}
 for model_name in all_model_names:
-    cpu_mesh = load_obj_mesh(MODELS_DIR / f"{model_name}.obj")
+    if model_name == "club_front_facade":
+        cpu_mesh = build_quad_mesh(
+            "club_front_facade",
+            [
+                ((-10.0, 0.0, 7.53), (-2.1, 0.0, 7.53), (-2.1, 5.4, 7.53), (-10.0, 5.4, 7.53), (4.0, 2.0)),
+                ((2.1, 0.0, 7.53), (10.0, 0.0, 7.53), (10.0, 5.4, 7.53), (2.1, 5.4, 7.53), (4.0, 2.0)),
+                ((-2.1, 2.7, 7.53), (2.1, 2.7, 7.53), (2.1, 5.4, 7.53), (-2.1, 5.4, 7.53), (2.0, 1.5)),
+            ],
+            TEXTURES_DIR / "club_wall_black_painted_planks_diff_1k.jpg",
+        )
+    else:
+        cpu_mesh = load_obj_mesh(MODELS_DIR / f"{model_name}.obj")
     gpu_meshes[model_name] = upload_mesh(cpu_mesh)
 
 print("Modelos enviados para a GPU:", ", ".join(gpu_meshes.keys()))
@@ -821,13 +883,13 @@ def material_profile(mesh_name, zone):
         "disco_support": (0.20, 0.65, 0.65, 44.0),
     }
     exterior = {
-        "parking_lot": (0.18, 0.78, 0.08, 8.0),
-        "rollershutter_door": (0.20, 0.72, 0.48, 34.0),
-        "corrado_car_01": (0.18, 0.78, 0.90, 72.0),
-        "oga_trash_can_01": (0.16, 0.68, 0.45, 28.0),
-        "street_lamp_01": (0.18, 0.70, 0.55, 38.0),
-        "party_person_01": (0.24, 0.70, 0.18, 16.0),
-        "party_person_male_01": (0.24, 0.70, 0.18, 16.0),
+        "parking_lot": (0.34, 0.78, 0.08, 8.0),
+        "rollershutter_door": (0.34, 0.72, 0.48, 34.0),
+        "corrado_car_01": (0.28, 0.78, 0.90, 72.0),
+        "oga_trash_can_01": (0.28, 0.68, 0.45, 28.0),
+        "street_lamp_01": (0.30, 0.70, 0.55, 38.0),
+        "party_person_01": (0.30, 0.70, 0.18, 16.0),
+        "party_person_male_01": (0.30, 0.70, 0.18, 16.0),
     }
     neutral = {
         "night_skybox": (0.0, 0.0, 0.0, 1.0),
@@ -882,6 +944,17 @@ scene_nodes = [
         scale=(1.85, 1.55, 1.55),
         zone=ZONE_SHARED,
         material=material_profile("rollershutter_door", ZONE_EXTERIOR),
+    ),
+    node(
+        "club_front_facade",
+        zone=ZONE_SHARED,
+        material=merge_material(
+            material_profile("club_room", ZONE_EXTERIOR),
+            ambient_factor=0.36,
+            diffuse_factor=0.80,
+            specular_factor=0.12,
+            shininess=10.0,
+        ),
     ),
     node("club_room", zone=ZONE_INTERIOR),
     node("lounge_floor", position=(0.0, 0.005, 0.0), zone=ZONE_INTERIOR),
@@ -951,7 +1024,7 @@ scene_nodes = [
     node("corrado_car_01", position=(11.8, 0.03, 14.9), scale=(0.0092, 0.0092, 0.0092), zone=ZONE_EXTERIOR),
     car_attached_node(
         "disco_ball",
-        offset=(10.18, 0.67, 14.44),
+        offset=(10.22, 0.58, 14.18),
         scale=(0.06, 0.06, 0.06),
         zone=ZONE_EXTERIOR,
         material=merge_material(
@@ -968,7 +1041,7 @@ scene_nodes = [
     ),
     car_attached_node(
         "disco_ball",
-        offset=(10.18, 0.67, 15.36),
+        offset=(10.22, 0.58, 15.62),
         scale=(0.06, 0.06, 0.06),
         zone=ZONE_EXTERIOR,
         material=merge_material(
@@ -1083,7 +1156,7 @@ def set_material(material, zone):
 def current_lights():
     return [
         {
-            "position": (10.18 + car_translation, 0.67, 14.44),
+            "position": (10.22 + car_translation, 0.58, 14.18),
             "color": (1.00, 0.96, 0.80),
             "intensity": 4.10,
             "enabled": light_states["external_car"],
@@ -1093,7 +1166,7 @@ def current_lights():
             "cutoff_cos": 0.90,
         },
         {
-            "position": (10.18 + car_translation, 0.67, 15.36),
+            "position": (10.22 + car_translation, 0.58, 15.62),
             "color": (1.00, 0.96, 0.80),
             "intensity": 4.10,
             "enabled": light_states["external_car"],
