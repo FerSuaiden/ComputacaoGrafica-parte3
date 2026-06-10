@@ -1,13 +1,19 @@
 # Projeto 3 - Computacao Grafica
 
-Cena 3D em OpenGL para o Projeto 3 da disciplina de Computacao Grafica.
+**Autores**
+
+- Felipe da Costa Coqueiro - NUSP 11781361
+- Fernando Alee Suaiden - NUSP 12680836
+
+Cena 3D em OpenGL para o Projeto 3 da disciplina de Computacao Grafica
+(ICMC / USP).
 
 O cenario continua sendo uma balada urbana com ambiente interno e ambiente
 externo. A base do Projeto 2 foi mantida, mas o pipeline de renderizacao foi
 atualizado para incluir iluminacao ambiente, difusa e especular em shader,
 com materiais e texturas definidos no proprio codigo para cada objeto da cena.
 
-Todo o codigo esta em `Projeto_2_Computacao_Grafica.ipynb`.
+Todo o codigo esta em `Projeto_3_Iluminacao_Computacao_Grafica.ipynb`.
 
 ## Requisitos Atendidos
 
@@ -34,9 +40,8 @@ Todo o codigo esta em `Projeto_2_Computacao_Grafica.ipynb`.
 
 ```text
 .
-├── Projeto_2_Computacao_Grafica.ipynb
+├── Projeto_3_Iluminacao_Computacao_Grafica.ipynb
 ├── README.md
-├── generate_project3_notebook.py
 └── assets
     ├── models
     ├── textures
@@ -54,7 +59,7 @@ pip install numpy PyOpenGL glfw PyGLM Pillow notebook ipykernel
 Abra o notebook:
 
 ```bash
-jupyter notebook Projeto_2_Computacao_Grafica.ipynb
+jupyter notebook Projeto_3_Iluminacao_Computacao_Grafica.ipynb
 ```
 
 Execute as celulas em ordem. A ultima celula abre a janela OpenGL.
