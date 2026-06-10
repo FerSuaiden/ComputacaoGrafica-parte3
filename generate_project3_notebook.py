@@ -9,7 +9,7 @@ def lines(text: str) -> list[str]:
     return [line + "\n" for line in text.splitlines()]
 
 
-NOTEBOOK_PATH = Path(__file__).with_name("Projeto_2_Computacao_Grafica.ipynb")
+NOTEBOOK_PATH = Path(__file__).with_name("Projeto_3_Iluminacao_Computacao_Grafica.ipynb")
 
 
 markdown_intro = """
@@ -47,6 +47,59 @@ Cada instancia da cena recebe seus proprios parametros:
 - `emissive_color` e `emissive_strength`: brilho proprio de objetos-fonte.
 
 Tambem classificamos cada objeto como pertencente ao `INTERIOR`, `EXTERIOR` ou `SHARED`, o que permite mascarar quais luzes realmente o afetam sem deixar objetos de transicao completamente apagados.
+"""
+
+
+markdown_lighting_concepts = """
+## 2. Relacao com a aula: ambiente, difusa e especular
+
+O Projeto 3 pede justamente a evolucao discutida na aula: sair de uma cena apenas texturizada e acrescentar um modelo de iluminacao que produza volume, profundidade e brilho. Neste notebook usamos o **modelo de Phong**, que soma tres componentes.
+
+### Luz ambiente
+
+Representa uma iluminacao geral espalhada pela cena. Ela nao depende da posicao da fonte nem do angulo da superficie. Seu papel principal e **evitar que os objetos fiquem completamente pretos** quando nao recebem luz direta.
+
+Em termos visuais:
+
+- aumentar `ambientLevel` clareia a cena toda;
+- diminuir `ambientLevel` destaca melhor onde a luz direta realmente chega;
+- desligar a luz ambiente ajuda a enxergar isoladamente as luzes pontuais.
+
+### Reflexao difusa
+
+Segue o modelo Lambertiano visto na aula. A intensidade depende do angulo entre:
+
+- `N`: normal da superficie;
+- `L`: direcao da luz.
+
+No shader usamos `max(dot(N, L), 0.0)`. Isso significa que:
+
+- quando a luz bate de frente na superficie, a contribuicao difusa e maior;
+- quando a luz chega de lado, o efeito enfraquece;
+- quando a luz esta atras da superficie, a contribuicao zera.
+
+Essa e a componente que mais ajuda a dar **sensacao de volume** para paredes, piso, carro e personagens.
+
+### Reflexao especular
+
+E a componente responsavel pelo brilho concentrado, o chamado highlight. Ela depende da luz, da normal e tambem da posicao da camera. O parametro `shininess` controla quao concentrado fica esse brilho.
+
+Na cena:
+
+- a **bola de discoteca** tem `shininess` alto para responder com brilho forte;
+- o **carro** tambem usa componente especular elevada;
+- objetos como sofa e personagens usam valores menores para nao parecerem metalicos.
+
+### Relacao com os materiais
+
+Como a aula destaca, materiais reais nao sao totalmente difusos nem totalmente especulares. Por isso cada objeto recebe no codigo seus proprios parametros:
+
+- `ambient_factor`;
+- `diffuse_factor`;
+- `specular_factor`;
+- `shininess`.
+
+Assim, a aparencia final passa a depender da interacao entre **luz, material, geometria e observador**, exatamente como discutido no resumo anexado.
 """
 
 
@@ -142,7 +195,7 @@ print("Pasta de texturas:", TEXTURES_DIR)
 
 
 markdown_shader = """
-## 2. Shader com Phong e mascaramento por ambiente
+## 3. Shader com Phong e mascaramento por ambiente
 
 O vertex shader agora envia para o fragment shader:
 
@@ -309,7 +362,7 @@ class ShaderProgram:
 
 
 markdown_loader = """
-## 3. Carregador OBJ com suporte a normais
+## 4. Carregador OBJ com suporte a normais
 
 O parser abaixo le apenas a geometria necessaria dos arquivos `.obj`:
 
@@ -500,7 +553,7 @@ def build_quad_mesh(name, quads, texture_path):
 
 
 markdown_scene = """
-## 4. Cena, materiais e luzes do Projeto 3
+## 5. Cena, materiais e luzes do Projeto 3
 
 Mantivemos a balada urbana, mas agora cada instancia recebe parametros de material no proprio codigo. O mapeamento foi organizado assim:
 
@@ -516,6 +569,55 @@ As fontes de luz sao:
 3. **Luz interna fria** na bola de discoteca.
 
 Cada uma tem interruptor independente. A luz ambiente tambem pode ser ligada/desligada separadamente e ajustada por teclado.
+"""
+
+
+markdown_light_map = """
+## 6. Onde cada luz esta e o que ela ilumina
+
+O projeto nao pede apenas adicionar luzes, mas sim usar fontes coerentes com a cena. Por isso vale deixar explicito onde cada uma esta e qual parte do cenario ela afeta.
+
+### Luz externa do carro
+
+Ha duas luzes posicionadas na frente do carro, simulando os farois:
+
+- farol esquerdo em aproximadamente `(10.22 + car_translation, 0.58, 14.18)`;
+- farol direito em aproximadamente `(10.22 + car_translation, 0.58, 15.62)`.
+
+Essas luzes:
+
+- se movem junto com a translacao do carro;
+- usam cor quase branca levemente quente;
+- sao tratadas como `spot lights`, iluminando preferencialmente a frente do carro;
+- afetam apenas objetos `EXTERIOR`.
+
+### Luz interna da luminaria
+
+A luz quente do interior fica em aproximadamente `(-2.2, 3.45, -1.4)`, logo abaixo de uma luminaria do teto. Ela ilumina o piso, parte da parede e personagens proximos, ajudando a dar um tom mais acolhedor ao ambiente interno.
+
+Essa luz afeta apenas objetos `INTERIOR`.
+
+### Luz interna da bola de discoteca
+
+A luz fria da disco ball fica em aproximadamente `(0.0, 3.72, -0.3)`.
+
+Ela foi colocada perto do centro do teto para:
+
+- reforcar a atmosfera de balada;
+- contrastar com a luz quente da luminaria;
+- destacar melhor superficies com componente especular.
+
+Tambem afeta apenas o `INTERIOR`.
+
+### Segmentacao por zonas
+
+Cada objeto recebe uma zona:
+
+- `ZONE_INTERIOR`: recebe apenas luzes internas;
+- `ZONE_EXTERIOR`: recebe apenas luzes externas;
+- `ZONE_SHARED`: objetos de transicao podem receber contribuicoes dos dois lados.
+
+Essa segmentacao atende diretamente ao requisito do enunciado de impedir vazamento de luz entre interior e exterior.
 """
 
 
@@ -1243,7 +1345,7 @@ def draw_scene_nodes(wireframe=False):
 
 
 markdown_controls = """
-## 5. Controles e execucao
+## 7. Controles e execucao
 
 Os controles principais ficaram assim:
 
@@ -1260,6 +1362,21 @@ Os controles principais ficaram assim:
 - `Esc`: fecha a janela.
 
 Com isso, a cena permite verificar visualmente todos os requisitos do Projeto 3.
+"""
+
+
+markdown_observations = """
+## 8. O que observar ao executar
+
+Alguns testes visuais ajudam a relacionar a implementacao com a teoria da aula:
+
+1. Desligar a luz ambiente com `0` mostra a diferenca entre iluminacao geral e luz direta.
+2. Diminuir `kd` com `K` enfraquece a percepcao de volume, porque a parcela difusa diminui.
+3. Diminuir `ks` com `L` reduz os highlights, especialmente no carro e na disco ball.
+4. Mover o carro com `T` e `G` comprova que a luz externa acompanha o objeto translacionado.
+5. Ligar e desligar `1`, `2` e `3` confirma que cada luz altera apenas a parte correta da cena.
+
+Assim, o notebook permite demonstrar visualmente ambiente, difusa e especular em uma cena coerente com o projeto.
 """
 
 
@@ -1321,14 +1438,17 @@ notebook = {
     "cells": [
         {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_intro)},
         {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_paths)},
+        {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_lighting_concepts)},
         {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": lines(code_main)},
         {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_shader)},
         {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": lines(code_shader)},
         {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_loader)},
         {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": lines(code_loader)},
         {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_scene)},
+        {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_light_map)},
         {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": lines(code_scene)},
         {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_controls)},
+        {"cell_type": "markdown", "metadata": {}, "source": lines(markdown_observations)},
         {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": lines(code_loop)},
     ],
     "metadata": {
